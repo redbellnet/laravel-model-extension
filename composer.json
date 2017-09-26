@@ -1,0 +1,17 @@
+{
+    "name": "redbell/laravel-model-extension",
+    "type": "library",
+    "require": {
+        "php": ">=5.6"
+    },
+    "require-dev": {
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "yuxuewen",
+            "email": "8586826@qq.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
