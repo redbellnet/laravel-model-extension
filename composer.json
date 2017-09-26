@@ -1,5 +1,5 @@
 {
-    "name": "redbell/laravel-model-extension",
+    "name": "redbellnet/laravel-model-extension",
     "type": "library",
     "require": {
         "php": ">=5.6"
