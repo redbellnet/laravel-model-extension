@@ -4,7 +4,7 @@ use RedBellNet\ModelExtension\Util;
 use RedBellNet\ModelExtension\RedisLib;
 
 trait QueryLib{
-    use Util, RedisLib, RequestLib;
+    use Util, RedisLib;
 
     protected static $is_open_query_flag_field = true;
     protected static $order_by=[];
