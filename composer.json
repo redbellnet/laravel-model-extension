@@ -13,5 +13,8 @@
             "email": "8586826@qq.com"
         }
     ],
+    "autoload": {
+        "psr-4": {"RedBellNet\\ModelExtension\\": "src/"}
+    },
     "minimum-stability": "dev"
 }

@@ -8,6 +8,10 @@ trait BaseModel
 
     use QueryLib;
 
+    public static function is_success(){
+        echo "success";
+    }
+
     /**
      * @Name checkIdExist
      * @Created by yuxuewen.
