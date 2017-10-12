@@ -13,7 +13,7 @@ trait RedisLib{
      * @return mixed
      */
     public static function redis($key, $callback, $expire = 0){
-        if (!config('system.is_use_redis')) return $callback();
+        if (!config('modelExtension.is_use_redis')) return $callback();
 
         $data = Redis::get($key);
 
@@ -73,7 +73,7 @@ trait RedisLib{
     }
 
     public static function setData($key, $data = '', $function = 'set'){
-        if (!config('system.is_use_redis')) return $data;
+        if (!config('modelExtension.is_use_redis')) return $data;
         Redis::{$function}($key, $data);
     }
 
