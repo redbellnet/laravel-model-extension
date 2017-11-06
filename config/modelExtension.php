@@ -23,5 +23,14 @@ return [
      | example:
      | 'put_field' =>  [ 'user' => ['username', 'password'] ]
      */
-    'put_field' =>  []
+    'put_field' =>  [],
+
+    'normal_status'     => [1,2],
+    'del_status'        =>  0,
+    'del_status_arr'    =>  [0],
+    'use_status'        =>  1,
+    'use_status_arr'    =>  [1],
+    'stop_status'       =>  2,
+    'stop_status_arr'   =>  [2],
+    'rule_all_status'   => [0,1,2],
 ];

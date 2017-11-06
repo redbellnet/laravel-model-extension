@@ -14,7 +14,12 @@
         }
     ],
     "autoload": {
-        "psr-4": {"RedBellNet\\ModelExtension\\": "src/"}
+        "psr-4": {
+            "RedBellNet\\ModelExtension\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "minimum-stability": "dev"
 }
