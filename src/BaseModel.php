@@ -120,7 +120,13 @@ trait BaseModel
         if (!empty($query_flag_field))
             $value = array_merge($value,[$query_flag_field[0]=>$query_flag_field[1]]);
 
-        if ($result = static::create($value)){
+        if(count($value) == count($value,true)){
+            $result = static::create($value);
+        }else{
+            $result = static::insert($value);
+        }
+
+        if ($result){
             $redis_key = static::class.'_lists';
             $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
