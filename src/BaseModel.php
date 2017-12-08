@@ -258,14 +258,15 @@ trait BaseModel
      * @param array $columns 显示的数据列
      * @param array $order_by 排序条件
      * @param string $status 状态
+     * @param string $where_function
      * @return mixed
      */
-    public static function getListByShopId($perPage = '', $page = '', array $filter = [], array $columns = ['*'], $order_by = [], $status = 'normal_status_arr'){
+    public static function getListByShopId($perPage = '', $page = '', array $filter = [], array $columns = ['*'], $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
 
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_page_'.$perPage.'_'.$page.'_filter_'.json_encode($filter).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
 
-        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$filter,self::is_set_status($status),$columns));
+        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$filter,self::is_set_status($status), $columns, $where_function));
     }
 
     /**
@@ -278,10 +279,11 @@ trait BaseModel
      * @param array $columns
      * @param array $order_by
      * @param string $status
+     * @param string $where_function
      * @return mixed
      */
-    public static function getList($perPage = '', $page = '', array $filter = array(), array $columns = array('*'), $order_by = [], $status = 'normal_status_arr'){
-        return self::getListByShopId($perPage, $page, $filter, $columns, $order_by, $status);
+    public static function getList($perPage = '', $page = '', array $filter = array(), array $columns = array('*'), $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
+        return self::getListByShopId($perPage, $page, $filter, $columns, $order_by, $status, $where_function);
     }
 
 
@@ -294,11 +296,13 @@ trait BaseModel
      * @param array $filterWhere
      * @param array $filterLike
      * @param array $columns
-     * @param string $orderBy
+     * @param array $order_by
      * @param string $status
+     * @param string $where_function
      * @return string
+     * @internal param string $orderBy
      */
-    public static function getListByFieldAndLikes($perPage, $page, array $filterWhere = [], array $filterLike = [], $columns = array('*'), $order_by = [], $status = 'normal_status_arr'){
+    public static function getListByFieldAndLikes($perPage, $page, array $filterWhere = [], array $filterLike = [], $columns = array('*'), $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
 
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_page_'.$perPage.'_'.$page.'_filterWhere_'.json_encode($filterWhere).'_filterLike_'.json_encode($filterLike).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
@@ -312,7 +316,7 @@ trait BaseModel
         self::set_order_by($order_by);
 
 
-        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$where,self::is_set_status($status),$columns));
+        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$where,self::is_set_status($status), $columns, $where_function));
     }
 
     /**
@@ -327,9 +331,10 @@ trait BaseModel
      * @param array $columns
      * @param array $order_by
      * @param string $status
+     * @param string $where_function
      * @return mixed
      */
-    public static function getListByFieldAndLikesJoinTable($perPage, $page, array $joinTable, array $filterWhere = [], array $filterLike = [], $columns = array('*'), $order_by = [], $status = 'normal_status_arr'){
+    public static function getListByFieldAndLikesJoinTable($perPage, $page, array $joinTable, array $filterWhere = [], array $filterLike = [], $columns = array('*'), $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
 
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_page_'.$perPage.'_'.$page.'_joinTable_'.json_encode($joinTable).'_filterWhere_'.json_encode($filterWhere).'_filterLike_'.json_encode($filterLike).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
@@ -343,7 +348,7 @@ trait BaseModel
         self::set_order_by($order_by);
 
 
-        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$where,self::is_set_status($status),$columns,'where',$joinTable));
+        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$where,self::is_set_status($status),$columns, $where_function, $joinTable));
     }
 
     /**
@@ -363,20 +368,21 @@ trait BaseModel
      * @param array $filter
      * @param array $order_by
      * @param string $status
+     * @param string $where_function
      * @return mixed
      * @internal param string $orderBy
      */
-    public static function getListByShopIdJoinTable($perPage, $page, array $joinTable, array $columns = array('*'), array $filter = array(), $order_by = [], $status = 'normal_status_arr'){
+    public static function getListByShopIdJoinTable($perPage, $page, array $joinTable, array $columns = array('*'), array $filter = array(), $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_page_'.$perPage.'_'.$page.'_joinTable_'.json_encode($joinTable).'_filter_'.json_encode($filter).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
 
         self::set_order_by($order_by);
 
-        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$filter,self::is_set_status($status),$columns,'where',$joinTable));
+        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$filter,self::is_set_status($status),$columns, $where_function, $joinTable));
     }
 
-    public static function getListJoinTable($perPage, $page, array $joinTable, array $filter = array(), array $columns = array('*'), $order_by = [], $status = 'normal_status_arr'){
-        return self::getListByShopIdJoinTable($perPage, $page, $joinTable, $columns, $filter, $order_by, $status);
+    public static function getListJoinTable($perPage, $page, array $joinTable, array $filter = array(), array $columns = array('*'), $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
+        return self::getListByShopIdJoinTable($perPage, $page, $joinTable, $columns, $filter, $order_by, $status, $where_function);
     }
 
     /**
@@ -387,11 +393,12 @@ trait BaseModel
      * @param array $columns 显示的数据列
      * @param array $order_by
      * @param string $status 状态
+     * @param string $where_function
      * @return mixed
      */
-    public static function getListOrLike($perPage = '', $page = '', array $filter = [], array $columns = array('*'), $order_by = [], $status = 'normal_status_arr'){
+    public static function getListOrLike($perPage = '', $page = '', array $filter = [], array $columns = array('*'), $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
 
-        return self::getListByFieldAndLikes($perPage, $page, [], $filter, $columns, $order_by, $status);
+        return self::getListByFieldAndLikes($perPage, $page, [], $filter, $columns, $order_by, $status, $where_function);
     }
 
     /**
@@ -405,11 +412,12 @@ trait BaseModel
      * @param array $columns
      * @param array $order_by
      * @param string $status
+     * @param string $where_function
      * @return mixed
      */
-    public static function getListOrLikeJoinTable($perPage = '', $page = '', array $joinTable, array $filter = [], array $columns = array('*'), $order_by = [], $status = 'normal_status_arr'){
+    public static function getListOrLikeJoinTable($perPage = '', $page = '', array $joinTable, array $filter = [], array $columns = array('*'), $order_by = [], $status = 'normal_status_arr', $where_function = 'where'){
 
-        return self::getListByFieldAndLikesJoinTable($perPage, $page, $joinTable, [], $filter, $columns, $order_by, $status);
+        return self::getListByFieldAndLikesJoinTable($perPage, $page, $joinTable, [], $filter, $columns, $order_by, $status, $where_function);
     }
 
     /**
@@ -422,12 +430,12 @@ trait BaseModel
      * @param mixed $status 状态
      * @return mixed
      */
-    public static function getAllListByShopId(array $columns = ['*'], $order_by = [], array $field_value = [], $status = 'use_status_arr'){
-        return self::getByField($field_value,$columns,$status,$order_by);
+    public static function getAllListByShopId(array $columns = ['*'], $order_by = [], array $field_value = [], $status = 'use_status_arr', $where_function = 'where'){
+        return self::getByField($field_value, $columns, $status, $order_by, $where_function);
     }
 
-    public static function getAllListByShopIdJoinTable(array $columns = ['*'], array $joinTable, $order_by = [], array $field_value = [], $status = 'use_status_arr'){
-        return self::getByFieldJoinTable($field_value, $joinTable, $columns, $status);
+    public static function getAllListByShopIdJoinTable(array $columns = ['*'], array $joinTable, $order_by = [], array $field_value = [], $status = 'use_status_arr', $where_function = 'where'){
+        return self::getByFieldJoinTable($field_value, $joinTable, $columns, $status, $where_function);
     }
 
     /**

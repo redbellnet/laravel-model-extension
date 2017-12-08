@@ -79,16 +79,17 @@ trait Util
      * @return Model
      */
     protected static function handle_base_where_function(Builder $model, array $where, $where_function = 'where'){
+        if (!empty($where)){
+            foreach ($where as $k => $v) {
+                if ($v instanceOf \Closure) {
+                    $model = $model->{$k}($v);
+                } else if (is_array($v) && $where_function == 'where') {
 
-        foreach ($where as $k => $v) {
-            if ($v instanceOf \Closure) {
-                $model = $model->{$k}($v);
-            } else if (is_array($v) && $where_function == 'where') {
+                    $model = $model->where($k, $v[0], $v[1]);
 
-                $model = $model->where($k, $v[0], $v[1]);
-
-            } else {
-                $model = $model->{$where_function}($k, $v);
+                } else {
+                    $model = $model->{$where_function}($k, $v);
+                }
             }
         }
         return $model;
