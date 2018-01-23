@@ -1,5 +1,6 @@
 <?php namespace RedBellNet\ModelExtension;
 
+use Illuminate\Support\Facades\Log;
 use RedBellNet\ModelExtension\Util;
 use RedBellNet\ModelExtension\RedisLib;
 
@@ -63,7 +64,7 @@ trait QueryLib{
      * @return array
      */
     protected static function query_flag_field(){
-        $query_flag_field = config('system.query_flag_field');
+        $query_flag_field = config('modelExtension.query_flag_field');
 
         if (self::$is_open_query_flag_field && $query_flag_field && $query_flag_field_value = call_user_func(config('system.query_flag_field'))) {
             return [$query_flag_field,$query_flag_field_value];
@@ -75,15 +76,69 @@ trait QueryLib{
     protected static function handle_get_by_id_data_to_redis($data){
         if (!empty($data)){
             if (!$data->is_from_cache){
-                $create_keys = self::getData(self::query_flag_field_for_redis_key(static::class.'_create_fields'), 'smembers');
+                $search_keys = [];
 
-                if (!empty($create_keys)){
-                    foreach ($create_keys as $k=>$v){
+                $put_field = config('modelExtension.put_field');
+                $model = last(explode("\\",static::class));
+                if (!empty($put_field)){
+                    foreach ($put_field as $k=>$v){
+                        if ($k == $model){
+                            $search_keys = $v;
+                            break;
+                        }
+                    }
+                }
+
+                $redis_search_keys = self::getData(self::query_flag_field_for_redis_key(static::class.'_create_fields'), 'smembers');
+
+                $search_keys = array_merge($search_keys, $redis_search_keys);
+
+                if (!empty($search_keys)){
+                    foreach ($search_keys as $k=>$v){
                         self::setData(self::query_flag_field_for_redis_key(static::class.'_field_'.$v.'_'.$data->$v), $data->id, 'sadd');
                     }
                 }
             }
         }
+    }
+
+    protected static function handle_join_table_with_model_relation($join_table, $join_table_result, $model_id){
+        $search_keys = [];
+
+        $put_field = config('modelExtension.put_field');
+        $model_relation = $join_table_result->getRelation($join_table);
+        $model_namespace = get_class($join_table_result->getRelation($model_relation));
+        $model = last(explode("\\",$model_namespace));
+        if (!empty($put_field)){
+            foreach ($put_field as $k=>$v){
+                if ($k == $model){
+                    $search_keys = $v;
+                    break;
+                }
+            }
+        }
+
+        $redis_search_keys = self::getData(self::query_flag_field_for_redis_key($model_namespace.'_create_fields'), 'smembers');
+
+        $search_keys = array_merge($search_keys, $redis_search_keys);
+
+        $redis_select_field = [];
+        if (!empty($model_relation)){
+            $original = $model_relation->getOriginal();
+            unset($original['id']);
+            $search_keys = array_merge(array_keys($original));
+        }
+
+        if (!empty($search_keys)){
+            foreach ($search_keys as $k=>$v){
+                if (!empty($model_relation) && isset($model_relation[$v])){
+                    self::setData(self::query_flag_field_for_redis_key($model_namespace.'_field_'.$v.'_'.$model_relation[$v]), $model_relation['id'], 'sadd');
+                }
+
+            }
+        }
+
+        self::setData(self::query_flag_field_for_redis_key($join_table.'_id_'.$join_table_result[$join_table]['id'].'_join_table_with_model_relation'), static::class.'_'.$model_id, 'sadd');
     }
 
     /**
@@ -334,13 +389,26 @@ trait QueryLib{
             if (!empty($status))
                 $self = $self->whereIn($status[0],$status[1]);
 
-            if (!empty($joinTable))
+            if (!empty($joinTable)){
                 $self = $self->with($joinTable);
+            }
+
 
             if (is_array($id))
-                return $self->get(self::handle_columns($columns));
+                $result =  $self->get(self::handle_columns($columns));
             else
-                return $self->first(self::handle_columns($columns));
+                $result =  $self->first(self::handle_columns($columns));
+
+            if (!empty($joinTable)){
+                foreach ($joinTable as $k=>$v){
+//                    self::handle_join_table_with_model_relation($k, $result, $id);
+                }
+            }
+//            $original = $result->getRelation('users')->getOriginal();
+//            unset($original['id']);
+//            dd(array_keys($original));
+
+            return $result;
         };
     }
 

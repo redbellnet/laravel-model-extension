@@ -173,12 +173,26 @@ trait BaseModel
         if ($unset_empty_keys) $field_value = unset_empty_keys($field_value);
 
         $id_arr = [];
+        $put_field = config('modelExtension.put_field');
+        $model = last(explode("\\",static::class));
+
+        if (!empty($put_field)){
+            foreach ($put_field as $k=>$v){
+                if ($k == $model){
+                    self::setData(self::query_flag_field_for_redis_key(static::class.'_create_fields'), $v, 'sadd');
+                    break;
+                }
+            }
+        }
+
         foreach ($field_where as $k=>$v ){
             $keys = self::getKeys(self::query_flag_field_for_redis_key(static::class.'_field_'.$k.'*'));
             if (empty($keys)){
-                //========需要设置延迟处理============//
+                //clear all of model's id record
                 self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_*'));
+
                 self::setData(self::query_flag_field_for_redis_key(static::class.'_create_fields'), $k, 'sadd');
+
             } else {
                 $ids = self::getData(self::query_flag_field_for_redis_key(static::class.'_field_'.$k.'_'.$v), 'smembers');
                 if (empty($id_arr))
@@ -188,13 +202,32 @@ trait BaseModel
             }
         }
 
-        if (!empty($id_arr)){
-            foreach ($id_arr as $v){
-                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$v.'*'));
-            }
-        }
+
+
+
+
 
         if (self::basePut($field_where, $field_value, self::is_set_status($status))){
+
+            $relation_set = self::getData(self::query_flag_field_for_redis_key($model.'_join_table_with_model_relation'), 'smembers');
+            if (!empty($relation_set)){
+                foreach ($relation_set as $k=>$v){
+                    // clear join table id record
+                    self::RedisFlushByKey(self::query_flag_field_for_redis_key($v.'_id_'.$v.'*'));
+                    // clear join table list
+                    self::RedisFlushByKey(self::query_flag_field_for_redis_key($v.'_lists').'*');
+                    self::RedisFlushByKey(self::query_flag_field_for_redis_key($v.'_field_value').'*');
+                }
+            }
+
+            // clear self ids record
+            if (!empty($id_arr)){
+                foreach ($id_arr as $v){
+                    self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$v.'*'));
+                }
+            }
+
+            // clear self list
             self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_lists').'*');
             self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_field_value').'*');
             return true;

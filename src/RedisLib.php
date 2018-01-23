@@ -66,15 +66,21 @@ trait RedisLib{
      * @Created by yuxuewen.
      * @Description 获取keys，或者检测key是否存在
      * @param $key
+     * @param bool $is_addslashes
      * @return mixed
      */
-    public static function getKeys($key){
-        return Redis::keys(addslashes($key));
+    public static function getKeys($key, $is_addslashes = true){
+        if ($is_addslashes)
+            $key = addslashes($key);
+        return Redis::keys($key);
     }
 
-    public static function setData($key, $data = '', $function = 'set'){
+    public static function setData($key, $data, $function = 'set'){
         if (!config('modelExtension.is_use_redis')) return $data;
-        Redis::{$function}($key, $data);
+        if (is_array($data))
+            Redis::{$function}($key, ...$data);
+        else
+            Redis::{$function}($key, $data);
     }
 
     public static function getData($key, $function  = 'get'){
