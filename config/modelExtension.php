@@ -25,6 +25,7 @@ return [
      |
      */
     'query_flag_field'  =>  '',
+    'query_flag_field_request_required'  =>  true,
 
     /*
      |--------------------------------------------------------------------------
