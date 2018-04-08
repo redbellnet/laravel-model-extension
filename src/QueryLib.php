@@ -66,7 +66,7 @@ trait QueryLib{
     protected static function query_flag_field(){
         $query_flag_field = config('modelExtension.query_flag_field');
 
-        if (self::$is_open_query_flag_field && $query_flag_field && $query_flag_field_value = call_user_func(config('system.query_flag_field'))) {
+        if (self::$is_open_query_flag_field && $query_flag_field && $query_flag_field_value = call_user_func(config('modelExtension.query_flag_field'))) {
             return [$query_flag_field,$query_flag_field_value];
         }
         self::$is_open_query_flag_field = true;
