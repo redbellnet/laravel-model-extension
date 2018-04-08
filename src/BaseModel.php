@@ -3,13 +3,43 @@
 use RedBellNet\ModelExtension\QueryLib;
 use Illuminate\Support\Facades\DB;
 
-trait BaseModel
+class BaseModel extends QueryLib
 {
 
-    use QueryLib;
+    protected $model;
 
-    public static function is_success(){
-        echo "success";
+    protected $builder;
+
+    /**
+     * @return mixed
+     */
+    public function getBuilder()
+    {
+        return $this->builder;
+    }
+
+    /**
+     * @param mixed $builder
+     */
+    public function setBuilder($builder)
+    {
+        $this->builder = $builder;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getModel()
+    {
+        return $this->model;
+    }
+
+    /**
+     * @param mixed $model
+     */
+    public function setModel($model)
+    {
+        $this->model = $model;
     }
 
     /**
@@ -20,7 +50,7 @@ trait BaseModel
      * @param array $status
      * @return bool
      */
-    public static function checkIdExist($id, $status = 'normal_status_arr'){
+    public function checkIdExist($id, $status = 'normal_status_arr'){
         $redis_key = 'checkIdExist_id_'.$id;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
@@ -887,5 +917,18 @@ trait BaseModel
         } else {
             return false;
         }
+    }
+
+
+    public function __call($method, $parameters)
+    {
+        var_dump('base_model__'.get_class($this->builder).'_call__'.$method);
+
+        $run_builder_method = $this->builder->$method(...$parameters);
+        if (get_class($this->builder) == Builder::class){
+            $this->builder = $run_builder_method;
+            return $this->builder;
+        }
+        return $run_builder_method;
     }
 }

@@ -4,12 +4,32 @@ use Illuminate\Support\Facades\Log;
 use RedBellNet\ModelExtension\Util;
 use RedBellNet\ModelExtension\RedisLib;
 
-trait QueryLib{
+class QueryLib{
     use Util, RedisLib;
 
     protected static $is_open_query_flag_field = true;
     protected static $order_by=[];
     protected static $group_by=[];
+
+    protected $model;
+    protected $builder;
+
+    /**
+     * @return array
+     */
+    public function getOrderBy()
+    {
+        return $this->order_by;
+    }
+
+    /**
+     * @param array $order_by
+     */
+    public function setOrderBy($order_by)
+    {
+        $this->order_by = $order_by;
+        return $this;
+    }
 
     /**
      * @Name order_by
@@ -152,7 +172,7 @@ trait QueryLib{
      * @param array $return_field
      * @return \Closure
      */
-    protected static function checkExist($field, $value, array $status = [], array $other_where = [], array $return_field = []){
+    protected function checkExist($field, $value, array $status = [], array $other_where = [], array $return_field = []){
         return function () use($field, $value, $status, $other_where, $return_field){
             $self = static::where([$field => $value]);
 
@@ -185,7 +205,7 @@ trait QueryLib{
      * @param array $status
      * @return mixed
      */
-    protected static function basePut(array $field_where, array $field_value, array $status = []){
+    protected function basePut(array $field_where, array $field_value, array $status = []){
         $self = static::getModel();
         if (!empty($field_where)){
             foreach ($field_where as $k => $v){
@@ -217,7 +237,7 @@ trait QueryLib{
      * @param array $joinTable
      * @return \Closure
      */
-    protected static function baseGet(array $columns = ['*'], array $status = [], $where_function = 'where', $query_function= '', array $joinTable = [] ){
+    protected function baseGet(array $columns = ['*'], array $status = [], $where_function = 'where', $query_function= '', array $joinTable = [] ){
         return function () use($status, $joinTable, $columns, $where_function, $query_function) {
             $self = static::getModel();
 
@@ -263,7 +283,7 @@ trait QueryLib{
      * @param string $query_function
      * @return \Closure
      */
-    protected static function baseGetJoinTable(array $joinTable = [], array $columns = ['*'], array $status = [], $where_function = 'where', $query_function= '' ){
+    protected function baseGetJoinTable(array $joinTable = [], array $columns = ['*'], array $status = [], $where_function = 'where', $query_function= '' ){
         return self::baseGet($columns, $status , $where_function, $query_function, $joinTable);
     }
 
@@ -281,7 +301,7 @@ trait QueryLib{
      * @param array $joinTable
      * @return \Closure
      */
-    protected static function baseGetByField(array $where, array $status = [], array $columns = ['*'], $where_function = 'where', $query_function= '', array $joinTable = [] ){
+    protected function baseGetByField(array $where, array $status = [], array $columns = ['*'], $where_function = 'where', $query_function= '', array $joinTable = [] ){
         return function () use($where, $status, $joinTable, $columns, $where_function, $query_function) {
             $self = static::setModel(static::getModel());
             if (!empty($where)) {
@@ -336,7 +356,7 @@ trait QueryLib{
      * @param string $query_function
      * @return \Closure
      */
-    protected static function baseGetByFieldJoinTable(array $where, array $joinTable = [], array $status = [], array $columns = ['*'], $where_function = 'where', $query_function= '' ){
+    protected function baseGetByFieldJoinTable(array $where, array $joinTable = [], array $status = [], array $columns = ['*'], $where_function = 'where', $query_function= '' ){
         return self::baseGetByField($where, $status, $columns, $where_function, $query_function,$joinTable );
     }
 
@@ -353,7 +373,7 @@ trait QueryLib{
      * @param string $where_function
      * @return \Closure
      */
-    protected static function baseGetByFieldWithPageJoinTable($perPage = '', $page = '', array $where, array $joinTable = [], array $status = [], array $columns = ['*'], $where_function = 'where'){
+    protected function baseGetByFieldWithPageJoinTable($perPage = '', $page = '', array $where, array $joinTable = [], array $status = [], array $columns = ['*'], $where_function = 'where'){
         return self::baseGetListWithPage($perPage, $page, $where, $status, $columns, $where_function, $joinTable);
     }
 
@@ -368,7 +388,7 @@ trait QueryLib{
      * @param array $joinTable
      * @return \Closure
      */
-    protected static function baseGetByID($id, array $status = [], array $where = [], array $columns = array('*'), array $joinTable = [] ){
+    protected function baseGetByID($id, array $status = [], array $where = [], array $columns = array('*'), array $joinTable = [] ){
 
         return function () use($id, $status, $joinTable, $where, $columns) {
             $self = static::setModel(static::getModel());
@@ -426,7 +446,7 @@ trait QueryLib{
      * @param array $joinTable
      * @return \Closure
      */
-    protected static function baseGetListWithPage($perPage = '', $page = '', array $where = [], array $status = [], array $columns = ['*'], $where_function = 'where', array $joinTable = [] ){
+    protected function baseGetListWithPage($perPage = '', $page = '', array $where = [], array $status = [], array $columns = ['*'], $where_function = 'where', array $joinTable = [] ){
         return function () use($perPage, $page, $where, $status, $joinTable, $columns, $where_function) {
             $self = static::setModel(static::getModel());
             if (!empty($where)) {
