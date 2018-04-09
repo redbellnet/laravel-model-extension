@@ -299,6 +299,7 @@ trait BaseModel
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_page_'.$perPage.'_'.$page.'_filter_'.json_encode($filter).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
 
+        self::set_order_by($order_by);
         return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$filter,self::is_set_status($status), $columns, $where_function));
     }
 
