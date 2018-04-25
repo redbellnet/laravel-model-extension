@@ -63,7 +63,7 @@ trait Util
     protected static function handle_columns(array $columns){
         if (empty($columns) || $columns[0] == '*'){
             $model = static::getModel();
-            return array_keys($model->attributes());
+            return \Schema::getColumnListing($model->getTable());
         } else {
             return $columns;
         }
