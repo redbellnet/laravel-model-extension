@@ -21,7 +21,7 @@ trait BaseModel
      * @return bool
      */
     public static function checkIdExist($id, $status = 'normal_status_arr'){
-        $redis_key = static::class.'checkIdExist_id_'.$id;
+        $redis_key = static::class.'_checkIdExist_id_'.$id;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
         $result = static::redis($redis_key,static::checkExist('id',$id,self::is_set_status($status)));
@@ -50,7 +50,7 @@ trait BaseModel
      * @return bool
      */
     public static function checkNameExist($name, $status = 'normal_status_arr'){
-        $redis_key = static::class.'checkIdExist_name_'.$name;
+        $redis_key = static::class.'_checkIdExist_name_'.$name;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
         $result = static::redis($redis_key,static::checkExist('name',$name,self::is_set_status($status),[],['id']));
@@ -83,7 +83,7 @@ trait BaseModel
      * @return bool
      */
     public static function checkFieldExist($field, $value, $status = 'normal_status_arr', $other_where = [], $return_field = []){
-        $redis_key = static::class.'checkFieldExist_'.$field.'_'.$value;
+        $redis_key = static::class.'_checkFieldExist_'.$field.'_'.$value;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
         $result = static::redis($redis_key,static::checkExist($field, $value, self::is_set_status($status), $other_where, array_merge(['id'],$return_field)));
