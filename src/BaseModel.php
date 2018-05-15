@@ -21,7 +21,7 @@ trait BaseModel
      * @return bool
      */
     public static function checkIdExist($id, $status = 'normal_status_arr'){
-        $redis_key = static::class.'_checkIdExist_id_'.$id;
+        $redis_key = 'checkIdExist_id_'.$id;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
         $result = static::redis($redis_key,static::checkExist('id',$id,self::is_set_status($status)));
@@ -50,7 +50,7 @@ trait BaseModel
      * @return bool
      */
     public static function checkNameExist($name, $status = 'normal_status_arr'){
-        $redis_key = static::class.'_checkIdExist_name_'.$name;
+        $redis_key = 'checkIdExist_name_'.$name;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
         $result = static::redis($redis_key,static::checkExist('name',$name,self::is_set_status($status),[],['id']));
@@ -83,7 +83,7 @@ trait BaseModel
      * @return bool
      */
     public static function checkFieldExist($field, $value, $status = 'normal_status_arr', $other_where = [], $return_field = []){
-        $redis_key = static::class.'_checkFieldExist_'.$field.'_'.$value;
+        $redis_key = 'checkFieldExist_'.$field.'_'.$value;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
         $result = static::redis($redis_key,static::checkExist($field, $value, self::is_set_status($status), $other_where, array_merge(['id'],$return_field)));
@@ -150,8 +150,6 @@ trait BaseModel
 
         if ($result = self::basePut(['id'=>$id], $value)){
             self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_lists').'*');
-            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_').$id.'*');
-            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkFieldExist_').'*');
             self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$id).'*');
             self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_field_value').'*');
             return $result;
@@ -302,7 +300,7 @@ trait BaseModel
         $redis_key .= '_page_'.$perPage.'_'.$page.'_filter_'.json_encode($filter).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
 
         self::set_order_by($order_by);
-        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$filter,self::is_set_status($status), $columns, $where_function));
+        return self::redis($redis_key,self::baseGetListWithPage($perPage, $page, $filter, self::is_set_status($status), $columns, $where_function));
     }
 
     /**
@@ -344,7 +342,7 @@ trait BaseModel
         $redis_key .= '_page_'.$perPage.'_'.$page.'_filterWhere_'.json_encode($filterWhere).'_filterLike_'.json_encode($filterLike).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
 
         $where['where'] = function($query) use($filterLike){
-            self::arrayChangeToOrWhere($query,$filterLike);
+            self::arrayChangeToOrWhere($query, $filterLike);
         };
 
         $where = array_merge($filterWhere,$where);
@@ -352,7 +350,7 @@ trait BaseModel
         self::set_order_by($order_by);
 
 
-        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$where,self::is_set_status($status), $columns, $where_function));
+        return self::redis($redis_key,self::baseGetListWithPage($perPage, $page, $where, self::is_set_status($status), $columns, $where_function));
     }
 
     /**
@@ -376,15 +374,15 @@ trait BaseModel
         $redis_key .= '_page_'.$perPage.'_'.$page.'_joinTable_'.json_encode($joinTable).'_filterWhere_'.json_encode($filterWhere).'_filterLike_'.json_encode($filterLike).'_by_field_'.json_encode($columns).'_order_by_'.json_encode($order_by).'_status_'.json_encode($status);
 
         $where['where'] = function($query) use($filterLike){
-            self::arrayChangeToOrWhere($query,$filterLike);
+            self::arrayChangeToOrWhere($query, $filterLike);
         };
 
-        $where = array_merge($filterWhere,$where);
+        $where = array_merge($filterWhere, $where);
 
         self::set_order_by($order_by);
 
 
-        return self::redis($redis_key,self::baseGetListWithPage($perPage,$page,$where,self::is_set_status($status),$columns, $where_function, $joinTable));
+        return self::redis($redis_key,self::baseGetListWithPage($perPage, $page, $where, self::is_set_status($status), $columns, $where_function, $joinTable));
     }
 
     /**
@@ -488,7 +486,7 @@ trait BaseModel
         $redis_key .= '_by_field_'.json_encode($columns);
         $redis_key .= '_static_'.$status;
 
-        $data = self::redis($redis_key, static::baseGetByID($id,self::is_set_status($status)));
+        $data = self::redis($redis_key, static::baseGetByID($id,self::is_set_status($status)), [], $columns);
         self::handle_get_by_id_data_to_redis($data);
         return $data;
     }
@@ -521,7 +519,7 @@ trait BaseModel
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_ids_'.json_encode($ids).'_where_'.json_encode($field_value).'_status_'.json_encode($status).'_by_field_'.json_encode($columns);
 
-        return self::redis($redis_key, static::baseGetByID($ids,self::is_set_status($status),$field_value,$columns));
+        return self::redis($redis_key, static::baseGetByID($ids, self::is_set_status($status), $field_value, $columns));
     }
 
     /**
@@ -535,7 +533,7 @@ trait BaseModel
      */
     public static function getByIdsSimple(array $ids = [], array $columns = array('*'), array $field_value = []){
         foreach ($ids as $v) if (!is_numeric($v)) self::forbiddenResponse(['非法参数']);
-        return self::getByIds($ids,$columns,'',$field_value);
+        return self::getByIds($ids,$columns, '', $field_value);
     }
 
     /**
@@ -556,7 +554,7 @@ trait BaseModel
 
         self::set_order_by($order_by);
 
-        return self::redis($redis_key,self::baseGetByField($field_where,self::is_set_status($status),$columns,$where_function, $query_function));
+        return self::redis($redis_key,self::baseGetByField($field_where, self::is_set_status($status), $columns, $where_function, $query_function));
     }
 
     /**
@@ -609,7 +607,7 @@ trait BaseModel
     public static function getInField(array $field_whereIn, array $columns = array('*'), array $field_where = [], $status = 'normal_status_arr', array $order_by = [], $query_function='', $is_open_query_flag_field=true){
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_whereIn_'.json_encode($field_whereIn).'_where_'.json_encode($field_where).
-                    '_status_'.json_encode($status).'_by_field_'.json_encode($columns).'order_by'.json_encode($order_by);
+            '_status_'.json_encode($status).'_by_field_'.json_encode($columns).'order_by'.json_encode($order_by);
 
         self::set_order_by($order_by);
 
@@ -618,7 +616,7 @@ trait BaseModel
         if (!empty($field_where))
             return self::redis($redis_key,self::baseGetByField($field_where,self::is_set_status($status),$columns,['whereIn'=>$field_whereIn], $query_function));
         else
-            return self::redis($redis_key,self::baseGetByField($field_whereIn,self::is_set_status($status),$columns,'whereIn', $query_function));
+            return self::redis($redis_key,self::baseGetByField($field_whereIn, self::is_set_status($status), $columns, 'whereIn', $query_function));
     }
 
     /**
@@ -639,8 +637,8 @@ trait BaseModel
                                                array $field_where = [], $status = 'normal_status_arr', array $order_by = [], $query_function='', $is_open_query_flag_field=true){
         $redis_key = self::query_flag_field_for_redis_key(static::class.'_lists');
         $redis_key .= '_joinTable_'.json_encode($joinTable).'_whereIn_'.json_encode($field_whereIn).
-                    '_where_'.json_encode($field_where).'_status_'.json_encode($status).'_by_field_'.
-                    json_encode($columns).'order_by'.json_encode($order_by);
+            '_where_'.json_encode($field_where).'_status_'.json_encode($status).'_by_field_'.
+            json_encode($columns).'order_by'.json_encode($order_by);
 
         self::set_order_by($order_by);
 
