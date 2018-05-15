@@ -486,7 +486,7 @@ trait BaseModel
         $redis_key .= '_by_field_'.json_encode($columns);
         $redis_key .= '_static_'.$status;
 
-        $data = self::redis($redis_key, static::baseGetByID($id,self::is_set_status($status)), [], $columns);
+        $data = self::redis($redis_key, static::baseGetByID($id,self::is_set_status($status), [], $columns));
         self::handle_get_by_id_data_to_redis($data);
         return $data;
     }
