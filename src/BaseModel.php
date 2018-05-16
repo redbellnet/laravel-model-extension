@@ -83,7 +83,7 @@ trait BaseModel
      * @return bool
      */
     public static function checkFieldExist($field, $value, $status = 'normal_status_arr', $other_where = [], $return_field = []){
-        $redis_key = static::class.'_checkFieldExist_'.$field.'_'.$value;
+        $redis_key = static::class.'_checkFieldExist_'.$field.'_'.$value.join('_',$other_where);
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
 
         $result = static::redis($redis_key,static::checkExist($field, $value, self::is_set_status($status), $other_where, array_merge(['id'],$return_field)));
