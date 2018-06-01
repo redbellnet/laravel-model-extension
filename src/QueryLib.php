@@ -152,19 +152,29 @@ trait QueryLib{
      * @param array $return_field
      * @return \Closure
      */
-    protected static function checkExist($field, $value, array $status = [], array $other_where = [], array $return_field = []){
-        return function () use($field, $value, $status, $other_where, $return_field){
+    protected static function checkExist($field, $value, array $status = [], array $other_where = [], array $return_field = [], $where_function='where'){
+        return function () use($field, $value, $status, $other_where, $return_field, $where_function){
             $self = static::where([$field => $value]);
 
-            if (!empty($other_where)){
-                foreach ($other_where as $k => $v){
-                    if (is_array($v)){
-                        $self = $self->{$v[0]}($k, $v[1]);
-                    } else {
-                        $self = $self->where($k, $v);
-                    }
+            if (!empty($other_where)) {
+                if (is_string($where_function))
+                    $self = self::handle_base_where_function($self, $other_where, $where_function);
+
+                if (is_array($where_function)) {
+                    $self = self::handle_base_where_function($self, $other_where, 'where');
+                    $self = self::handle_array_where_function($self, $where_function);
                 }
             }
+
+//            if (!empty($other_where)){
+//                foreach ($other_where as $k => $v){
+//                    if (is_array($v)){
+//                        $self = $self->{$v[0]}($k, $v[1]);
+//                    } else {
+//                        $self = $self->where($k, $v);
+//                    }
+//                }
+//            }
 
             if (!empty($query_flag_field = self::query_flag_field()))
                 $self = $self->where($query_flag_field[0],$query_flag_field[1]);
