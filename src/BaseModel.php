@@ -8,10 +8,6 @@ trait BaseModel
 
     use QueryLib;
 
-    public static function is_success(){
-        echo "success";
-    }
-
     /**
      * @Name checkIdExist
      * @Created by yuxuewen.
@@ -23,7 +19,6 @@ trait BaseModel
     public static function checkIdExist($id, $status = 'normal_status_arr'){
         $redis_key = static::class.'_checkIdExist_id_'.$id;
         $redis_key = self::query_flag_field_for_redis_key($redis_key);
-        dump("111");
 
         $result = static::redis($redis_key,static::checkExist('id',$id,self::is_set_status($status)));
         if ($result->isEmpty()) return false;
@@ -149,6 +144,9 @@ trait BaseModel
     public static function put($id = 0, array $value, $unset_empty_keys = true){
         if ($unset_empty_keys) $value = unset_empty_keys($value);
 
+        if (!is_numeric($id)){
+            abort(400,'ID必须为数字');
+        }
         if ($result = self::basePut(['id'=>$id], $value)){
             self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_lists').'*');
             self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_').$id.'*');
@@ -472,7 +470,7 @@ trait BaseModel
     }
 
     public static function getAllListByShopIdJoinTable(array $columns = ['*'], array $joinTable, $order_by = [], array $field_value = [], $status = 'use_status_arr', $where_function = 'where'){
-        return self::getByFieldJoinTable($field_value, $joinTable, $columns, $status, $where_function);
+        return self::getByFieldJoinTable($field_value, $joinTable, $columns, $status, $order_by, $where_function);
     }
 
     /**
@@ -754,12 +752,12 @@ trait BaseModel
      * @param array $orderBy
      * @return mixed
      */
-    public static function getByFieldOrLike(array $like_where, array $columns = array('*'), array $other_where = [], $status = 'normal_status_arr', $order_by = []){
+    public static function getByFieldOrLike(array $like_where, array $columns = array('*'), array $other_where = [], $status = 'normal_status_arr', $order_by = [], $where_function='where', $query_function=''){
         $where ['where'] = function($query) use($like_where){
             self::arrayChangeToOrWhere($query,$like_where);
         };
         $where = array_merge($other_where,$where);
-        return self::getByField($where,$columns,$status,$order_by,'where','first');
+        return self::getByField($where,$columns,$status,$order_by,$where_function,$query_function);
     }
 
 

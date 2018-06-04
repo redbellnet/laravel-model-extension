@@ -84,9 +84,11 @@ trait Util
                 if ($v instanceOf \Closure) {
                     $model = $model->{$k}($v);
                 } else if (is_array($v) && $where_function == 'where') {
-
-                    $model = $model->where($k, $v[0], $v[1]);
-
+                    if ($v[0] == 'in'){
+                        $model = $model->whereIn($k, $v[1]);
+                    } else {
+                        $model = $model->where($k, $v[0], $v[1]);
+                    }
                 } else {
                     $model = $model->{$where_function}($k, $v);
                 }
