@@ -142,18 +142,21 @@ trait BaseModel
      * @param bool $unset_empty_keys    剔除数组中的空值
      * @return array
      */
-    public static function put($id = 0, array $value, $unset_empty_keys = true){
+    public static function put($id, array $value, $unset_empty_keys = true){
         if ($unset_empty_keys) $value = unset_empty_keys($value);
 
-        if (!is_numeric($id)){
-            abort(400,'ID必须为数字');
+        if (!is_array($id)){
+            $id = [$id];
         }
-        if ($result = self::basePut(['id'=>$id], $value)){
-            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_lists').'*');
-            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_').$id.'*');
-            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkFieldExist_').'*');
-            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$id).'*');
-            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_field_value').'*');
+        
+        if ($result = self::basePut(['whereIn'=>['id', $id]], $value)){
+            collect($id)->each(function($value, $key){
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_lists').'*');
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_').$value.'*');
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkFieldExist_').'*');
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$value).'*');
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_field_value').'*');
+            });
             return $result;
         } else {
             return false;

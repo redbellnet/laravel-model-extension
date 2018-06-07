@@ -184,22 +184,20 @@ trait QueryLib{
      * @return mixed
      */
     protected static function basePut(array $field_where, array $field_value, array $status = []){
-        $self = static::getModel();
-        if (!empty($field_where)){
-            foreach ($field_where as $k => $v){
-                if (is_array($v)){
-                    $self = $self->where($k, $v[0], $v[1]);
-                } else {
-                    $self = $self->where($k, $v);
-                }
-            }
+        $self = static::toBase();
+
+
+        if (!empty($field_where)) {
+            event(new HandleModelEvent($self, $field_where));
         }
 
-        if (!empty($query_flag_field = self::query_flag_field()))
-            $self = $self->where($query_flag_field[0],$query_flag_field[1]);
 
         if (!empty($status))
-            $self = $self->whereIn($status[0],$status[1]);
+            $self = $self->whereIn(...$status);
+
+        if (!empty($query_flag_field = self::query_flag_field()))
+            $self = $self->where(...$query_flag_field);
+
 
         return $self->update($field_value);
     }
@@ -217,7 +215,7 @@ trait QueryLib{
      */
     protected static function baseGet(array $columns = ['*'], array $status = [], $where_function = 'where', $query_function= '', array $joinTable = [] ){
         return function () use($status, $joinTable, $columns, $where_function, $query_function) {
-            $self = static::getModel();
+            $self = static::toBase();
 
 
             if (!empty($query_flag_field = self::query_flag_field()))
@@ -281,7 +279,7 @@ trait QueryLib{
      */
     protected static function baseGetByField(array $where, array $status = [], array $columns = ['*'], $where_function = 'where', $query_function= '', array $joinTable = [] ){
         return function () use($where, $status, $joinTable, $columns, $where_function, $query_function) {
-            $self = static::setModel(static::getModel());
+            $self = static::toBase();
 
             if (!empty($where)) {
                 event(new HandleModelEvent($self, $where, $where_function));
@@ -421,7 +419,7 @@ trait QueryLib{
      */
     protected static function baseGetListWithPage($perPage = '', $page = '', array $where = [], array $status = [], array $columns = ['*'], $where_function = 'where', array $joinTable = [] ){
         return function () use($perPage, $page, $where, $status, $joinTable, $columns, $where_function) {
-            $self = static::setModel(static::getModel());
+            $self = static::toBase();
 
             if (!empty($where)) {
                 event(new HandleModelEvent($self, $where, $where_function));
