@@ -204,10 +204,6 @@ trait BaseModel
         }
 
 
-
-
-
-
         if (self::basePut($field_where, $field_value, self::is_set_status($status))){
 
             $relation_set = self::getData(self::query_flag_field_for_redis_key($model.'_join_table_with_model_relation'), 'smembers');

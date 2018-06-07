@@ -1,6 +1,7 @@
 <?php namespace RedBellNet\ModelExtension;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
 
 trait Util
@@ -72,28 +73,54 @@ trait Util
     /**
      * @Name handle_base_where_function
      * @Created by yuxuewen.
-     * @Description
+     * @Description 处理where条件
      * @param Model $model
      * @param array $where
+     *          使用方式：
+     *                  只有一个条件  [ 条件 ]
+     *                  多个条件     [ [ 条件1 ], [ 条件2 ] ]
+     *          支持的条件方式：
+     *                  1、 [field, value]
+     *                              demo                [ 'id', 1 ]
+     *                              对应laravel语句     where('id', 1)
+     *                  2、 [field , condition, value]
+     *                              demo                [ 'id', '!=', 1 ]
+     *                              对应的laravel语句    where('id', '!=', 1)
+     *                  3、 [field => value]
+     *                              demo                [ 'id' => 1]
+     *                              对应laravel语句     where('id', 1)
+     *                  4、 [field => [condition, value] ]
+     *                              demo                [ id => ['!=', 1] ]
+     *                              对应laravel语句     where('id', '!=', 1)
+     *                  5、[condition => [field, args...] ]  此处args为laravel可支持的参数个数
+     *                              demo                [ 'whereIn' => ['id', [1,2,3]] ]
+     *                              对应laravel语句     whereIn('id', [1, 2, 3])
+     *                              demo2               [ 'whereColumn' => ['updated_at', '>', 'created_at'] ]
+     *                              对应laravel语句     whereColumn('updated_at', '>', 'created_at')
+     *
      * @param string $where_function
      * @return Model
      */
     protected static function handle_base_where_function(Builder $model, array $where, $where_function = 'where'){
-        if (!empty($where)){
+        if (empty($where)) return $model;
+
+        $keys = array_keys($where);
+        if ( $keys === array_keys($keys)){
+            $model = $model->{$where_function}(...$where);
+        } else {
             foreach ($where as $k => $v) {
-                if ($v instanceOf \Closure) {
-                    $model = $model->{$k}($v);
-                } else if (is_array($v) && $where_function == 'where') {
-                    if ($v[0] == 'in'){
-                        $model = $model->whereIn($k, $v[1]);
-                    } else {
-                        $model = $model->where($k, $v[0], $v[1]);
-                    }
+                if ((new \ReflectionClass(Builder::class))->hasMethod($k)
+                    && (new \ReflectionMethod(Builder::class, $k))->isPublic()
+                    || (new \ReflectionClass(QueryBuilder::class))->hasMethod($k)
+                    && (new \ReflectionMethod(QueryBuilder::class, $k))->isPublic()){
+                    $where_function = $k;
                 } else {
-                    $model = $model->{$where_function}($k, $v);
+                    array_unshift($v, $k);
                 }
+                $model = $model->{$where_function}(...$v);
             }
         }
+
         return $model;
     }
 
