@@ -1,4 +1,5 @@
-<?php namespace RedBellNet\ModelExtension;
+<?php
+namespace RedBellNet\ModelExtension;
 
 use RedBellNet\ModelExtension\QueryLib;
 use Illuminate\Support\Facades\DB;

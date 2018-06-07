@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
+use RedBellNet\ModelExtension\Event\HandleModelEvent;
 
 trait Util
 {
@@ -103,6 +104,8 @@ trait Util
      */
     protected static function handle_base_where_function(Builder $model, array $where, $where_function = 'where'){
         if (empty($where)) return $model;
+
+        event(new HandleModelEvent($model, $where, $where_function));
 
         $keys = array_keys($where);
         if ( $keys === array_keys($keys)){
