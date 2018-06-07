@@ -157,15 +157,18 @@ trait QueryLib{
         return function () use($field, $value, $status, $other_where, $return_field, $where_function){
             $self = static::where([$field => $value]);
 
+
             if (!empty($other_where)) {
                 event(new HandleModelEvent($self, $other_where, $where_function));
             }
 
-            if (!empty($query_flag_field = self::query_flag_field()))
-                $self = $self->where($query_flag_field[0],$query_flag_field[1]);
-
             if (!empty($status))
-                $self = $self->whereIn($status[0],$status[1]);
+                $self = $self->whereIn(...$status);
+
+            if (!empty($query_flag_field = self::query_flag_field()))
+                $self = $self->where(...$query_flag_field);
+
+
 
             return $self->get(array_merge([$field],$return_field));
         };
@@ -279,14 +282,9 @@ trait QueryLib{
     protected static function baseGetByField(array $where, array $status = [], array $columns = ['*'], $where_function = 'where', $query_function= '', array $joinTable = [] ){
         return function () use($where, $status, $joinTable, $columns, $where_function, $query_function) {
             $self = static::setModel(static::getModel());
-            if (!empty($where)) {
-                if (is_string($where_function))
-                    $self = self::handle_base_where_function($self, $where, $where_function);
 
-                if (is_array($where_function)) {
-                    $self = self::handle_base_where_function($self, $where, 'where');
-                    $self = self::handle_array_where_function($self, $where_function);
-                }
+            if (!empty($where)) {
+                event(new HandleModelEvent($self, $where, $where_function));
             }
 
             if (!empty($query_flag_field = self::query_flag_field()))
@@ -424,15 +422,11 @@ trait QueryLib{
     protected static function baseGetListWithPage($perPage = '', $page = '', array $where = [], array $status = [], array $columns = ['*'], $where_function = 'where', array $joinTable = [] ){
         return function () use($perPage, $page, $where, $status, $joinTable, $columns, $where_function) {
             $self = static::setModel(static::getModel());
-            if (!empty($where)) {
-                if (is_string($where_function))
-                    $self = self::handle_base_where_function($self, $where, $where_function);
 
-                if (is_array($where_function)) {
-                    $self = self::handle_base_where_function($self, $where, 'where');
-                    $self = self::handle_array_where_function($self, $where_function);
-                }
+            if (!empty($where)) {
+                event(new HandleModelEvent($self, $where, $where_function));
             }
+
             if (!empty($query_flag_field = self::query_flag_field()))
                 $self = $self->where($query_flag_field[0], $query_flag_field[1]);
 

@@ -35,8 +35,14 @@ class HandleModelEvent
      *                              对应laravel语句     where('id', '!=', 1)
      *                  5、[condition => [field, args...] ]  此处args为laravel可支持的参数个数
      *                              demo                [ 'whereIn' => ['id', [1,2,3]] ]
+     *                              demo2               [ 'whereIn' =>
+     *                                                      [
+     *                                                          ['id', [1,2,3]],
+     *                                                          ['pid',[1,2,3]]
+     *                                                      ]
+     *                                                  ]
      *                              对应laravel语句     whereIn('id', [1, 2, 3])
-     *                              demo2               [ 'whereColumn' => ['updated_at', '>', 'created_at'] ]
+     *                              demo3               [ 'whereColumn' => ['updated_at', '>', 'created_at'] ]
      *                              对应laravel语句     whereColumn('updated_at', '>', 'created_at')
      * @param string $where_function
      */

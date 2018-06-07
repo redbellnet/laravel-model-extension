@@ -40,7 +40,15 @@ class AddWhereToModelListener
                 } else {
                     array_unshift($v, $k);
                 }
-                $event->model->{$where_function}(...$v);
+
+                if (is_array($v[0])){
+                    foreach ($v as $v_v){
+                        $event->model->{$where_function}(...$v_v);
+                    }
+                } else {
+                    $event->model->{$where_function}(...$v);
+                }
+
             }
         }
 
