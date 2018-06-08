@@ -5,10 +5,18 @@ use RedBellNet\ModelExtension\Event\HandleModelEvent;
 use RedBellNet\ModelExtension\Util;
 use RedBellNet\ModelExtension\RedisLib;
 
-trait QueryLib{
+class QueryLib
+{
     use Util, RedisLib;
 
-    protected static $is_open_query_flag_field = true;
+
+
+    protected $model;
+    protected $builder;
+
+
+
+
     protected static $order_by=[];
     protected static $group_by=[];
 
@@ -58,21 +66,7 @@ trait QueryLib{
         }
     }
 
-    /**
-     * @Name query_flag_field
-     * @Created by yuxuewen.
-     * @Description
-     * @return array
-     */
-    protected static function query_flag_field(){
-        $query_flag_field = config('modelExtension.query_flag_field');
 
-        if (self::$is_open_query_flag_field && $query_flag_field && $query_flag_field_value = call_user_func(config('modelExtension.query_flag_field'))) {
-            return [$query_flag_field,$query_flag_field_value];
-        }
-        self::$is_open_query_flag_field = true;
-        return [];
-    }
 
     protected static function handle_get_by_id_data_to_redis($data){
         if (!empty($data)){
@@ -359,26 +353,27 @@ trait QueryLib{
      * @param array $joinTable
      * @return \Closure
      */
-    protected static function baseGetByID($id, array $status = [], array $where = [], array $columns = array('*'), array $joinTable = [] ){
+    protected function baseGetByID($id, array $status = [], array $where = [], array $columns = array('*'), array $joinTable = [] ){
 
         return function () use($id, $status, $joinTable, $where, $columns) {
-            $self = static::setModel(static::getModel());
-            $self = $self->whereKey($id);
+            $self = $this->builder;
+
+//            if (is_array($id)){
+//                $self = $self->whereIn('id', $id);
+//            } else {
+//                $self = $self->where('id', $id);
+//            }
+
+            $self = $self->where('id', $id);
             if (!empty($where)) {
-                foreach ($where as $k => $v) {
-                    if (is_array($v)) {
-                        $self = $self->where($k, $v[0], $v[1]);
-                    } else {
-                        $self = $self->where($k, $v);
-                    }
-                }
+                event(new HandleModelEvent($self, $where));
             }
 
             if (!empty($query_flag_field = self::query_flag_field()))
-                $self = $self->where($query_flag_field[0], $query_flag_field[1]);
+                $self = $self->where(...$query_flag_field);
 
             if (!empty($status))
-                $self = $self->whereIn($status[0],$status[1]);
+                $self = $self->whereIn(...$status);
 
             if (!empty($joinTable)){
                 $self = $self->with($joinTable);
@@ -386,18 +381,9 @@ trait QueryLib{
 
 
             if (is_array($id))
-                $result =  $self->get(self::handle_columns($columns));
+                $result =  $self->get($this->handle_columns($columns));
             else
-                $result =  $self->first(self::handle_columns($columns));
-
-            if (!empty($joinTable)){
-                foreach ($joinTable as $k=>$v){
-//                    self::handle_join_table_with_model_relation($k, $result, $id);
-                }
-            }
-//            $original = $result->getRelation('users')->getOriginal();
-//            unset($original['id']);
-//            dd(array_keys($original));
+                $result =  $self->first($this->handle_columns($columns));
 
             return $result;
         };

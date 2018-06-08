@@ -7,7 +7,7 @@ use RedBellNet\ModelExtension\Event\HandleModelEvent;
 
 trait Util
 {
-
+    protected  $is_open_query_flag_field = true;
     /**
      * @Name query_flag_field_for_redis_key
      * @Created by yuxuewen.
@@ -15,11 +15,36 @@ trait Util
      * @param $redis_key
      * @return string
      */
-    public static function query_flag_field_for_redis_key($redis_key){
-        if (!empty($query_flag_field = self::query_flag_field())){
-            $redis_key .= '_by_'.$query_flag_field[0].'_'.$query_flag_field[1];
+    public function query_flag_field_for_redis_key($redis_key){
+        if (!empty($query_flag_field = $this->query_flag_field())){
+            array_unshift($query_flag_field, $redis_key);
+            $redis_key = join("_", $query_flag_field);
         }
+
         return $redis_key;
+    }
+
+    /**
+     * @Name query_flag_field
+     * @Created by yuxuewen.
+     * @Description
+     * @return array
+     */
+    protected function query_flag_field(){
+        $query_flag_field = config('modelExtension.query_flag_field');
+
+        if (!function_exists($query_flag_field)){
+            abort(422, $query_flag_field.' not found, you can create it in helper.');
+        }
+
+        if ($this->is_open_query_flag_field
+                && $query_flag_field
+                && $query_flag_field_value = call_user_func($query_flag_field)
+            ) {
+            return [$query_flag_field,$query_flag_field_value];
+        }
+        $this->is_open_query_flag_field = true;
+        return [];
     }
 
     /**
@@ -43,6 +68,25 @@ trait Util
 
     }
 
+
+
+    /**
+     * @Name handle_columns
+     * @Created by yuxuewen.
+     * @Description 空数组或者是*的查询字段，自动读取model里面定义的字段
+     * @param array $columns
+     * @return array
+     */
+    protected function handle_columns(array $columns){
+        if (empty($columns) || $columns[0] == '*'){
+            return \Schema::getColumnListing($this->model->getTable());
+        } else {
+            return $columns;
+        }
+    }
+
+
+
     /**
      * @Name set_order_by
      * @Created by yuxuewen.
@@ -53,22 +97,6 @@ trait Util
     public static function set_order_by($order_by=[]){
         self::$order_by = $order_by;
         return static::getModel();
-    }
-
-    /**
-     * @Name handle_columns
-     * @Created by yuxuewen.
-     * @Description 空数组或者是*的查询字段，自动读取model里面定义的字段
-     * @param array $columns
-     * @return array
-     */
-    protected static function handle_columns(array $columns){
-        if (empty($columns) || $columns[0] == '*'){
-            $model = static::getModel();
-            return \Schema::getColumnListing($model->getTable());
-        } else {
-            return $columns;
-        }
     }
 
     /**
