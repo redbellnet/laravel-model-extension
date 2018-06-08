@@ -14,41 +14,7 @@ use Illuminate\Support\Facades\DB;
  */
 class BaseModel extends QueryLib
 {
-    protected $model;
 
-    protected $builder;
-
-    /**
-     * @return mixed
-     */
-    public function getBuilder()
-    {
-        return $this->builder;
-    }
-
-    /**
-     * @param mixed $builder
-     */
-    public function setBuilder($builder)
-    {
-        $this->builder = $builder;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getModel()
-    {
-        return $this->model;
-    }
-
-    /**
-     * @param mixed $model
-     */
-    public function setModel($model)
-    {
-        $this->model = $model;
-    }
 
     /**
      * @Name checkIdExist
@@ -528,19 +494,11 @@ class BaseModel extends QueryLib
             throw new OperationFailedException();
         }
 
-//        if (is_array($id)){
-//            collect($id)->each(function($value, $key){
-//
-//            });
-//        }
+        $this->field_for_redis_key(['columns'=>$columns,'status'=>$status]);
 
-        dump(get_class($this->model));
 
-        $redis_key = $this->query_flag_field_for_redis_key(get_class($this->model).'_id_'.$id);
-        $redis_key .= '_by_field_'.json_encode($columns);
-        $redis_key .= '_static_'.$status;
 
-        $data = self::redis($redis_key, static::baseGetByID($id,self::is_set_status($status), [], $columns));
+        $data = $this->redis(join("_",['id', $id]), static::baseGetByID($id,self::is_set_status($status), [], $columns));
         if (config('modelExtension.is_use_redis')){
             self::handle_get_by_id_data_to_redis($data);
         }

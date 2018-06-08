@@ -22,6 +22,11 @@ class MyModel extends Model
 
     protected $instance_base_model = '';
 
+    /**
+     * @var
+     */
+    public $parameters_for_redis_key;
+
 
     /**
      * @Name instanceBaseModel
@@ -64,13 +69,18 @@ class MyModel extends Model
      */
     public function __call($method, $parameters)
     {
+
         $base_mode = new \ReflectionClass(BaseModel::class);
         $this->instance_base_model = $this->instanceBaseModel();
+        $this->instance_base_model->field_for_redis_key($parameters);
+
         if ($base_mode->hasMethod($method)){
 //            dump('my_model__call__base_model_'.$method);
             if (!$this->builder) $this->builder = $this->newQuery();
 
             $this->instance_base_model->setBuilder($this->builder);
+
+
             return $this->instance_base_model->$method(...$parameters);
         }
 

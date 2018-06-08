@@ -12,8 +12,17 @@ trait RedisLib{
      * @param int $expire
      * @return mixed
      */
-    public static function redis($key, $callback, $expire = 0){
+    public function redis($key, $callback, $expire = 0){
+
         if (!config('modelExtension.is_use_redis')) return $callback();
+
+        $this->query_flag_field_for_redis_key();
+        $this->redis_key['primary'] = $key;
+        $this->redis_key['model'] = get_class($this->getModel());
+
+        $key = collect($this->redis_key)->map(function($value, $key){
+            return join("_", [$key, $value]);
+        })->reverse()->implode("_");
 
         $data = Redis::get($key);
 

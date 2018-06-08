@@ -7,7 +7,78 @@ use RedBellNet\ModelExtension\Event\HandleModelEvent;
 
 trait Util
 {
+    /**
+     * @var bool
+     */
     protected  $is_open_query_flag_field = true;
+
+    /**
+     * @var string
+     */
+    public $select = ['*'];
+
+    public $redis_key = [];
+
+    protected $model;
+    protected $builder;
+
+
+    /**
+     * @param mixed $parameters_for_redis_key
+     */
+    public function setParametersForRedisKey($parameters_for_redis_key)
+    {
+        $this->redis_key['parameters'] = $parameters_for_redis_key;
+    }
+
+
+    /**
+     * @param mixed $redis_key
+     */
+    public function setRedisKey($redis_key)
+    {
+//        if (empty($redis_key)){
+//            $redis_key = get_class($this->model);
+//        } else {
+//            $redis_key = join("_",[get_class($this->model), $redis_key]);
+//        }
+
+        $this->redis_key = $redis_key;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBuilder()
+    {
+        return $this->builder;
+    }
+
+    /**
+     * @param mixed $builder
+     */
+    public function setBuilder($builder)
+    {
+        $this->builder = $builder;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getModel()
+    {
+        return $this->model;
+    }
+
+    /**
+     * @param mixed $model
+     */
+    public function setModel($model)
+    {
+        $this->model = $model;
+    }
+
+
     /**
      * @Name query_flag_field_for_redis_key
      * @Created by yuxuewen.
@@ -15,14 +86,37 @@ trait Util
      * @param $redis_key
      * @return string
      */
-    public function query_flag_field_for_redis_key($redis_key){
+    public function query_flag_field_for_redis_key(){
         if (!empty($query_flag_field = $this->query_flag_field())){
-            array_unshift($query_flag_field, $redis_key);
-            $redis_key = join("_", $query_flag_field);
+
+            $this->redis_key['query_flag_field'] = join("_", $query_flag_field);
         }
 
-        return $redis_key;
+
     }
+
+
+    public function field_for_redis_key(){
+        if (!isset($this->redis_key['field'])){
+            $this->redis_key['field'] = '';
+        }
+
+        if (!empty($new_field = func_get_args())){
+
+            $old_field = json_decode($this->redis_key['field']);
+            if (!empty($old_field)){
+                $new_field = json_encode(array_merge($old_field, $new_field));
+            } else {
+                $new_field = json_encode($new_field);
+            }
+            $this->redis_key['field'] = $new_field;
+        }
+
+
+
+    }
+
+
 
     /**
      * @Name query_flag_field
@@ -32,6 +126,8 @@ trait Util
      */
     protected function query_flag_field(){
         $query_flag_field = config('modelExtension.query_flag_field');
+
+        if (empty($query_flag_field)) return [];
 
         if (!function_exists($query_flag_field)){
             abort(422, $query_flag_field.' not found, you can create it in helper.');
@@ -43,6 +139,7 @@ trait Util
             ) {
             return [$query_flag_field,$query_flag_field_value];
         }
+
         $this->is_open_query_flag_field = true;
         return [];
     }
@@ -69,6 +166,17 @@ trait Util
     }
 
 
+    /**
+     * @Name select
+     * @Created by yuxuewen.
+     * @Description 需要查询的字段
+     * @return $this
+     */
+    public function select(){
+        $this->select = !empty(func_get_args())?func_get_args():$this->select;
+
+        return $this;
+    }
 
     /**
      * @Name handle_columns
@@ -78,6 +186,10 @@ trait Util
      * @return array
      */
     protected function handle_columns(array $columns){
+        if ($this->select[0] != '*'){
+            return $this->select;
+        }
+
         if (empty($columns) || $columns[0] == '*'){
             return \Schema::getColumnListing($this->model->getTable());
         } else {

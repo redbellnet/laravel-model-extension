@@ -9,16 +9,15 @@ class QueryLib
 {
     use Util, RedisLib;
 
-
-
-    protected $model;
-    protected $builder;
-
-
-
-
     protected static $order_by=[];
     protected static $group_by=[];
+
+
+
+
+
+
+
 
     /**
      * @Name order_by
