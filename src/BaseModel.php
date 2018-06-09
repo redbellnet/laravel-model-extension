@@ -488,7 +488,9 @@ trait BaseModel
         $redis_key .= '_static_'.$status;
 
         $data = self::redis($redis_key, static::baseGetByID($id,self::is_set_status($status), [], $columns));
-        self::handle_get_by_id_data_to_redis($data);
+        if (config('modelExtension.is_use_redis')){
+            self::handle_get_by_id_data_to_redis($data);
+        }
         return $data;
     }
 
@@ -500,7 +502,9 @@ trait BaseModel
         $redis_key .= '_joinTable_'.json_encode($joinTable);
 
         $data = self::redis($redis_key,static::baseGetByID($id,self::is_set_status($status),[],$columns,$joinTable));
-        self::handle_get_by_id_data_to_redis($data);
+        if (config('modelExtension.is_use_redis')){
+            self::handle_get_by_id_data_to_redis($data);
+        }
         return $data;
     }
 

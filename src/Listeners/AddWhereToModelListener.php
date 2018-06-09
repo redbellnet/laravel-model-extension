@@ -31,14 +31,17 @@ class AddWhereToModelListener
         if ( $keys === array_keys($keys)){
             $event->model->{$event->where_function}(...$event->where);
         } else {
+            $where_function = $event->where_function;
             foreach ($event->where as $k => $v) {
                 if ((new \ReflectionClass(Builder::class))->hasMethod($k)
                     && (new \ReflectionMethod(Builder::class, $k))->isPublic()
                     || (new \ReflectionClass(QueryBuilder::class))->hasMethod($k)
                     && (new \ReflectionMethod(QueryBuilder::class, $k))->isPublic()){
                     $where_function = $k;
-                } else {
+                } else if (is_array($v)) {
                     array_unshift($v, $k);
+                } else {
+                    $v = [$k, $v];
                 }
 
                 if (is_array($v[0])){
