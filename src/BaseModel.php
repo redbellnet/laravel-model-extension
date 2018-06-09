@@ -618,10 +618,13 @@ trait BaseModel
 
         self::set_is_open_query_flag_field($is_open_query_flag_field);
 
-        if (!empty($field_where))
-            return self::redis($redis_key,self::baseGetByField($field_where,self::is_set_status($status),$columns,['whereIn'=>$field_whereIn], $query_function));
-        else
-            return self::redis($redis_key,self::baseGetByField($field_whereIn, self::is_set_status($status), $columns, 'whereIn', $query_function));
+        if (!empty($field_whereIn)){
+            foreach ($field_whereIn as $k => $v){
+                $field_where['whereIn'][] = [$k, $v];
+            }
+        }
+
+        return self::redis($redis_key,self::baseGetByField($field_whereIn, self::is_set_status($status), $columns, 'where', $query_function));
     }
 
     /**
