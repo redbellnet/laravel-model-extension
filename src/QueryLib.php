@@ -184,8 +184,7 @@ trait QueryLib{
      * @return mixed
      */
     protected static function basePut(array $field_where, array $field_value, array $status = []){
-        $self = static::toBase();
-
+        $self = static::setModel(static::getModel());
 
         if (!empty($field_where)) {
             event(new HandleModelEvent($self, $field_where));

@@ -114,12 +114,17 @@ trait BaseModel
         if ($unset_empty_keys) $value = unset_empty_keys($value);
 
         $query_flag_field = self::query_flag_field();
-        if (!empty($query_flag_field))
-            $value = array_merge($value,[$query_flag_field[0]=>$query_flag_field[1]]);
 
         if(count($value) == count($value,true)){
+            if (!empty($query_flag_field))
+                $value = array_merge($value,[$query_flag_field[0]=>$query_flag_field[1]]);
             $result = static::create($value);
         }else{
+            if (!empty($query_flag_field)){
+                $value = collect($value)->map(function($value, $key) use($query_flag_field){
+                    return array_merge($value,[$query_flag_field[0]=>$query_flag_field[1]]);
+                })->all();
+            }
             $result = static::insert($value);
         }
 
@@ -157,7 +162,7 @@ trait BaseModel
                 self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$value).'*');
                 self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_field_value').'*');
             });
-            return $result;
+            return true;
         } else {
             return false;
         }
