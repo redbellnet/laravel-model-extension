@@ -148,12 +148,12 @@ trait BaseModel
         if (!is_array($id)){
             $id = [$id];
         }
-        
+
         if ($result = self::basePut(['whereIn'=>['id', $id]], $value)){
             collect($id)->each(function($value, $key){
                 self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_lists').'*');
-                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_').$value.'*');
-                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkFieldExist_').'*');
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_'.$value).'*');
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkFieldExist_*').'*');
                 self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$value).'*');
                 self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_field_value').'*');
             });
@@ -191,10 +191,13 @@ trait BaseModel
         }
 
         foreach ($field_where as $k=>$v ){
+            self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkFieldExist_'.$k).'*');
             $keys = self::getKeys(self::query_flag_field_for_redis_key(static::class.'_field_'.$k.'*'));
             if (empty($keys)){
                 //clear all of model's id record
                 self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_*'));
+                self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_*').'*');
+
 
                 self::setData(self::query_flag_field_for_redis_key(static::class.'_create_fields'), $k, 'sadd');
 
@@ -225,6 +228,8 @@ trait BaseModel
             if (!empty($id_arr)){
                 foreach ($id_arr as $v){
                     self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_id_'.$v.'*'));
+                    self::RedisFlushByKey(self::query_flag_field_for_redis_key(static::class.'_checkIdExist_id_'.$v).'*');
+
                 }
             }
 
